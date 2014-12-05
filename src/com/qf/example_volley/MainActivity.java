@@ -34,7 +34,6 @@ import android.widget.TextView;
 public class MainActivity extends Activity implements Listener<JSONObject>{
 	private RequestQueue mQueue;
 	private NetworkImageView netImg;//Volley中的装载网络图片的空间按.
-	private TextView tx;
 	private ListView lv;
 	private News news ;
 	private List<Story> stories;
@@ -48,7 +47,6 @@ public class MainActivity extends Activity implements Listener<JSONObject>{
 	}
 	private void init() {
 		// TODO Auto-generated method stub
-		tx=(TextView) findViewById(R.id.tx);
 		lv = (ListView) findViewById(R.id.lv);
 		mQueue = Volley.newRequestQueue(getApplicationContext());
 		getJSOnObject();
@@ -66,101 +64,90 @@ public class MainActivity extends Activity implements Listener<JSONObject>{
 	public void onResponse(JSONObject jsonObject) {
 		// TODO Auto-generated method stub
 		//tx.setText(jsonObject.toString());
-		if(jsonObject!=null)
-		getContent(jsonObject);
-	}
-	
-	/**
-	 * 获得JSON内容.
-	 * @param json
-	 */
-	private void getContent(JSONObject json) {
-		// TODO Auto-generated method stub
-		try {
-			String date = json.getString("date");
-			JSONArray arrayStories = json.getJSONArray("stories");
-			news = new News();
-			if(arrayStories!=null&&arrayStories.length()>0){
-				stories = new ArrayList<Story>();
-				Story story=null;
-				for(int i=0;i<arrayStories.length();i++){
-					JSONObject jsonStory = arrayStories.getJSONObject(i);
-					story = new Story();
-					story.setShare_url(jsonStory.getString("share_url"));
-					story.setTitle(jsonStory.getString("title"));
-					story.setGa_prefixtype(jsonStory.getString("ga_prefix"));
-					story.setId(jsonStory.getString("id"));
-					story.setType(jsonStory.getString("type"));
-					//图片
-					JSONArray arrayImages = jsonStory.getJSONArray("images");
-					if(arrayImages!=null&&arrayImages.length()>0){
-						String imagesArr []= new String [arrayImages.length()];
-						for(int j=0;j<arrayImages.length();j++){
-							imagesArr[j]= arrayImages.getString(j);
+		if(jsonObject!=null){
+			try {
+				String date = jsonObject.getString("date");
+				JSONArray arrayStories = jsonObject.getJSONArray("stories");
+				news = new News();
+				if(arrayStories!=null&&arrayStories.length()>0){
+					stories = new ArrayList<Story>();
+					Story story=null;
+					for(int i=0;i<arrayStories.length();i++){
+						JSONObject jsonStory = arrayStories.getJSONObject(i);
+						story = new Story();
+						story.setShare_url(jsonStory.getString("share_url"));
+						story.setTitle(jsonStory.getString("title"));
+						story.setGa_prefixtype(jsonStory.getString("ga_prefix"));
+						story.setId(jsonStory.getString("id"));
+						story.setType(jsonStory.getString("type"));
+						//图片
+						JSONArray arrayImages = jsonStory.getJSONArray("images");
+						if(arrayImages!=null&&arrayImages.length()>0){
+							String imagesArr []= new String [arrayImages.length()];
+							for(int j=0;j<arrayImages.length();j++){
+								imagesArr[j]= arrayImages.getString(j);
+							}
+							story.setImages(imagesArr);
 						}
+						stories.add(story);
 					}
-					stories.add(story);
+					Log.i("stories"," "+stories.get(2).getTitle());
 				}
-				Log.i("stories"," "+stories.get(2).getTitle());
-			}
-			JSONArray arrayTopStories = json.getJSONArray("top_stories");
-			if(arrayTopStories!=null&&arrayTopStories.length()>0){
-				topStories = new ArrayList<TopStory> ();
-				TopStory topStory=null;
-				for(int i=0;i<arrayTopStories.length();i++){
-					JSONObject jsonStory2 = arrayTopStories.getJSONObject(i);
-					topStory = new TopStory();
-					topStory.setShare_url(jsonStory2.getString("share_url"));
-					topStory.setTitle(jsonStory2.getString("title"));
-					topStory.setGa_prefixtype(jsonStory2.getString("ga_prefix"));
-					topStory.setId(jsonStory2.getString("id"));
-					topStory.setType(jsonStory2.getString("type"));
-					topStory.setImage(jsonStory2.getString("image"));
-					topStories.add(topStory);
+				JSONArray arrayTopStories = jsonObject.getJSONArray("top_stories");
+				if(arrayTopStories!=null&&arrayTopStories.length()>0){
+					topStories = new ArrayList<TopStory> ();
+					TopStory topStory=null;
+					for(int i=0;i<arrayTopStories.length();i++){
+						JSONObject jsonStory2 = arrayTopStories.getJSONObject(i);
+						topStory = new TopStory();
+						topStory.setShare_url(jsonStory2.getString("share_url"));
+						topStory.setTitle(jsonStory2.getString("title"));
+						topStory.setGa_prefixtype(jsonStory2.getString("ga_prefix"));
+						topStory.setId(jsonStory2.getString("id"));
+						topStory.setType(jsonStory2.getString("type"));
+						topStory.setImage(jsonStory2.getString("image"));
+						topStories.add(topStory);
+					}
+					
 				}
 				
+				news.setDate(date);
+				news.setStroies(stories);
+				news.setTopStories(topStories);
+				
+				MyAdapter adapter = new MyAdapter();
+				lv.setAdapter(adapter);
+				if(news!=null){
+					Log.i("MainActivity","news不为空");
+				}else{
+					Log.i("MainActivity","news为空");
+				}
+				if(stories!=null){
+					Log.i("MainActivity","stories不为空");
+				}
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			
-			news.setDate(date);
-			news.setStroies(stories);
-			news.setTopStories(topStories);
-			
-			MyAdapter adapter = new MyAdapter(stories,MainActivity.this);
-			lv.setAdapter(adapter);
-			if(news!=null){
-				Log.i("MainActivity","news不为空");
-			}else{
-				Log.i("MainActivity","news为空");
-			}
-			if(stories!=null){
-				Log.i("MainActivity","stories不为空");
-			}
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
+		
 	}
+	
 	/**
 	 * 内部类:MyAdapter,BaseAdapter
 	 */
 	class MyAdapter extends BaseAdapter{
-		List<Story> stories_adapter;
-		Context context;
-		public MyAdapter(List<Story> stories,Context context ){
-			stories_adapter = stories;
-			context = context;
-		}
 		@Override
 		public int getCount() {
 			// TODO Auto-generated method stub
-			Log.i("stories_adapter.size()"," "+stories_adapter.size());
-			return stories_adapter==null? 0:stories_adapter.size();
+			Log.i("stories.size()", " "+stories.size());
+			return stories==null? 0:stories.size();
 		}
 
 		@Override
 		public Object getItem(int position) {
 			// TODO Auto-generated method stub
-			return stories_adapter.get(position);
+			return stories.get(position);
 		}
 
 		@Override
@@ -168,28 +155,31 @@ public class MainActivity extends Activity implements Listener<JSONObject>{
 			// TODO Auto-generated method stub
 			return position;
 		}
-
+		
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			// TODO Auto-generated method stub
-			MyHolder myHolder;
-			if(convertView==null){
-				myHolder = new MyHolder();
-				convertView = LayoutInflater.from(context).inflate(R.layout.item_lv, parent, false);
-				myHolder.imgv = (NetworkImageView) convertView.findViewById(R.id.netImgv);
-				convertView.setTag(myHolder);
-			}else{
-				myHolder = (MyHolder) convertView.getTag();
-			}
-			//getImages 只有一张图片.
-			Story story = stories_adapter.get(position);
-			if(story!=null&&story.getImages().length>0){
-				myHolder.imgv.setImageUrl(story.getImages()[0], new ImageLoader(mQueue, new BitmapCache()));
-			}
+			Story story = news.getStroies().get(position);		
+				MyHolder_StoryNews  myHolder_StoryNews;
+				if(story!=null){
+					Log.i("story.getImages()[0].length()",story.getImages().toString());
+					if(convertView==null){
+						myHolder_StoryNews= new MyHolder_StoryNews();
+						convertView = View.inflate(getApplicationContext(), R.layout.list_theme_news, null);
+						myHolder_StoryNews.imgv = (NetworkImageView) convertView.findViewById(R.id.netImgv);
+						myHolder_StoryNews.txTitle=(TextView)convertView.findViewById(R.id.tx_title);
+						convertView.setTag(myHolder_StoryNews);
+					}else{
+						myHolder_StoryNews = (MyHolder_StoryNews) convertView.getTag();
+					}
+						myHolder_StoryNews.txTitle.setText(story.getTitle());
+						myHolder_StoryNews.imgv.setImageUrl(story.getImages()[0], new ImageLoader(mQueue, new BitmapCache()));
+				}
 			return convertView;
 		}
-	}
-	class MyHolder{
-		public NetworkImageView imgv;
+		class MyHolder_StoryNews{
+			NetworkImageView imgv;
+			TextView txTitle;
+		}
 	}
 }
